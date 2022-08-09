@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-plugin-docs
+module github.com/fbreckle/terraform-plugin-docs
 
 go 1.17
 

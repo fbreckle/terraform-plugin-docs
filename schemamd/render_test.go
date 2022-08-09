@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
-	"github.com/hashicorp/terraform-plugin-docs/schemamd"
+	"github.com/fbreckle/terraform-plugin-docs/schemamd"
 )
 
 func TestRender(t *testing.T) {

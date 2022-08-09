@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/terraform-plugin-docs/schemamd"
+	"github.com/fbreckle/terraform-plugin-docs/schemamd"
 )
 
 func TestWriteType(t *testing.T) {
