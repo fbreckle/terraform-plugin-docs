@@ -75,6 +75,9 @@ type generator struct {
 	websiteTmpDir        string
 	websiteSourceDir     string
 
+	metadataExtraction bool
+	metadataDelimiter  string
+
 	ui cli.Ui
 }
 
@@ -86,7 +89,7 @@ func (g *generator) warnf(format string, a ...interface{}) {
 	g.ui.Warn(fmt.Sprintf(format, a...))
 }
 
-func Generate(ui cli.Ui, legacySidebar bool, providerName, renderedProviderName, renderedWebsiteDir, examplesDir, websiteTmpDir, websiteSourceDir, tfVersion string, ignoreDeprecated bool) error {
+func Generate(ui cli.Ui, legacySidebar bool, providerName, renderedProviderName, renderedWebsiteDir, examplesDir, websiteTmpDir, websiteSourceDir, tfVersion string, ignoreDeprecated bool, metadataExtraction bool, metadataDelimiter string) error {
 	g := &generator{
 		ignoreDeprecated: ignoreDeprecated,
 		legacySidebar:    legacySidebar,
@@ -98,6 +101,9 @@ func Generate(ui cli.Ui, legacySidebar bool, providerName, renderedProviderName,
 		examplesDir:          examplesDir,
 		websiteTmpDir:        websiteTmpDir,
 		websiteSourceDir:     websiteSourceDir,
+
+		metadataExtraction: metadataExtraction,
+		metadataDelimiter:  metadataDelimiter,
 
 		ui: ui,
 	}
@@ -122,6 +128,11 @@ func (g *generator) Generate(ctx context.Context) error {
 
 	if g.renderedProviderName == "" {
 		g.renderedProviderName = providerName
+	}
+
+	g.infof("metadata extraction is %v", g.metadataExtraction)
+	if g.metadataExtraction {
+		g.infof("metadata delimiter is %q", g.metadataDelimiter)
 	}
 
 	g.infof("rendering website for provider %q (as %q)", providerName, g.renderedProviderName)
@@ -192,7 +203,7 @@ func (g *generator) Generate(ctx context.Context) error {
 	return nil
 }
 
-func (g *generator) renderMissingResourceDoc(providerName, name, typeName string, schema *tfjson.Schema, websiteFileTemplate resourceFileTemplate, fallbackWebsiteFileTemplate resourceFileTemplate, websiteStaticCandidateTemplates []resourceFileTemplate, examplesFileTemplate resourceFileTemplate, examplesImportTemplate *resourceFileTemplate) error {
+func (g *generator) renderMissingResourceDoc(providerName, name, typeName string, schema *tfjson.Schema, websiteFileTemplate resourceFileTemplate, fallbackWebsiteFileTemplate resourceFileTemplate, websiteStaticCandidateTemplates []resourceFileTemplate, examplesFileTemplate resourceFileTemplate, examplesImportTemplate *resourceFileTemplate, metadataDelimiter string) error {
 	tmplPath, err := websiteFileTemplate.Render(name, providerName)
 	if err != nil {
 		return fmt.Errorf("unable to render path for resource %q: %w", name, err)
@@ -257,7 +268,7 @@ func (g *generator) renderMissingResourceDoc(providerName, name, typeName string
 	}
 
 	g.infof("generating template for %q", name)
-	md, err := targetResourceTemplate.Render(name, providerName, g.renderedProviderName, typeName, examplePath, importPath, schema)
+	md, err := targetResourceTemplate.Render(name, providerName, g.renderedProviderName, typeName, examplePath, importPath, schema, g.metadataExtraction, g.metadataDelimiter)
 	if err != nil {
 		return fmt.Errorf("unable to render template for %q: %w", name, err)
 	}
@@ -330,7 +341,9 @@ func (g *generator) renderMissingDocs(providerName string, providerSchema *tfjso
 			websiteResourceFallbackFileTemplate,
 			websiteResourceFileStatic,
 			examplesResourceFileTemplate,
-			&examplesResourceImportTemplate)
+			&examplesResourceImportTemplate,
+			g.metadataDelimiter,
+		)
 		if err != nil {
 			return fmt.Errorf("unable to render doc %q: %w", name, err)
 		}
@@ -347,7 +360,9 @@ func (g *generator) renderMissingDocs(providerName string, providerSchema *tfjso
 			websiteDataSourceFallbackFileTemplate,
 			websiteDataSourceFileStatic,
 			examplesDataSourceFileTemplate,
-			nil)
+			nil,
+			g.metadataDelimiter,
+		)
 		if err != nil {
 			return fmt.Errorf("unable to render doc %q: %w", name, err)
 		}
@@ -428,7 +443,7 @@ func (g *generator) renderStaticWebsite(providerName string, providerSchema *tfj
 			exampleFilePath := filepath.Join(g.examplesDir, "data-sources", resName, "data-source.tf")
 			if resSchema != nil {
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(resName, providerName, g.renderedProviderName, "Data Source", exampleFilePath, "", resSchema)
+				render, err := tmpl.Render(resName, providerName, g.renderedProviderName, "Data Source", exampleFilePath, "", resSchema, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render data source template %q: %w", rel, err)
 				}
@@ -446,7 +461,7 @@ func (g *generator) renderStaticWebsite(providerName string, providerSchema *tfj
 
 			if resSchema != nil {
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(resName, providerName, g.renderedProviderName, "Resource", exampleFilePath, importFilePath, resSchema)
+				render, err := tmpl.Render(resName, providerName, g.renderedProviderName, "Resource", exampleFilePath, importFilePath, resSchema, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render resource template %q: %w", rel, err)
 				}
