@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -140,7 +141,6 @@ func (t providerTemplate) Render(providerName, renderedProviderName, exampleFile
 	}
 	return renderStringTemplate("providerTemplate", s, struct {
 		Description string
-
 		HasExample  bool
 		ExampleFile string
 
@@ -165,7 +165,7 @@ func (t providerTemplate) Render(providerName, renderedProviderName, exampleFile
 	})
 }
 
-func (t resourceTemplate) Render(name, providerName, renderedProviderName, typeName, exampleFile, importFile string, schema *tfjson.Schema) (string, error) {
+func (t resourceTemplate) Render(name, providerName, renderedProviderName, typeName, exampleFile, importFile string, schema *tfjson.Schema, metadataExtraction bool, metadataDelimiter string) (string, error) {
 	schemaBuffer := bytes.NewBuffer(nil)
 	err := schemamd.Render(schema, schemaBuffer)
 	if err != nil {
@@ -177,10 +177,15 @@ func (t resourceTemplate) Render(name, providerName, renderedProviderName, typeN
 		return "", nil
 	}
 
+	// Take the original description (possibly containing metadata) and extract the pure description and metadata
+	description, _ := extractDescription(schema.Block.Description, metadataDelimiter)
+	metadata, _ := extractMetadata(schema.Block.Description, metadataDelimiter)
+
 	return renderStringTemplate("resourceTemplate", s, struct {
 		Type        string
 		Name        string
 		Description string
+		SubCategory string
 
 		HasExample  bool
 		ExampleFile string
@@ -197,7 +202,8 @@ func (t resourceTemplate) Render(name, providerName, renderedProviderName, typeN
 	}{
 		Type:        typeName,
 		Name:        name,
-		Description: schema.Block.Description,
+		Description: description,
+		SubCategory: metadata["subcategory"],
 
 		HasExample:  exampleFile != "" && fileExists(exampleFile),
 		ExampleFile: exampleFile,
@@ -217,7 +223,7 @@ func (t resourceTemplate) Render(name, providerName, renderedProviderName, typeN
 const defaultResourceTemplate resourceTemplate = `---
 ` + frontmatterComment + `
 page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
-subcategory: ""
+subcategory: "{{.SubCategory}}"
 description: |-
 {{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
 ---
@@ -263,3 +269,21 @@ description: |-
 
 {{ .SchemaMarkdown | trimspace }}
 `
+
+// This is the metadata template that is used in a regular expression to search and strip metadata from the description
+const metaStringTemplate = `%[1]smeta%[1]s.*?%[1]s.*?%[1]s`
+
+func extractDescription(desc, delimiter string) (string, error) {
+	s := regexp.MustCompile(fmt.Sprintf(metaStringTemplate, delimiter)).Split(desc, -1)
+	return s[len(s)-1], nil
+}
+
+func extractMetadata(desc, delimiter string) (map[string]string, error) {
+	metadata := map[string]string{}
+	allMetadata := regexp.MustCompile(fmt.Sprintf(metaStringTemplate, delimiter)).FindAllString(desc, -1)
+	for _, metaString := range allMetadata {
+		explodedMeta := regexp.MustCompile(delimiter).Split(metaString, -1)
+		metadata[explodedMeta[2]] = explodedMeta[3]
+	}
+	return metadata, nil
+}
