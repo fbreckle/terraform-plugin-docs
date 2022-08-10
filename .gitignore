@@ -22,3 +22,6 @@ tfproviderdocsgen
 
 # VSCode files
 .vscode
+
+# vim swap files
+*.swp
