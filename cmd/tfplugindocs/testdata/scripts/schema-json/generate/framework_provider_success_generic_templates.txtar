@@ -17,6 +17,8 @@ cmpenv docs/state-stores/example.md expected-state-store.md
 
 
 -- expected-output.txt --
+metadata extraction is true
+metadata delimiter is ":"
 rendering website for provider "terraform-provider-scaffolding" (as "terraform-provider-scaffolding")
 copying any existing content to tmp dir
 exporting schema from JSON file

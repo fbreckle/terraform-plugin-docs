@@ -13,6 +13,8 @@ cmpenv docs/data-sources/example.md expected-datasource.md
 cmpenv docs/resources/example.md expected-resource.md
 
 -- expected-output.txt --
+metadata extraction is true
+metadata delimiter is ":"
 rendering website for provider "terraform-provider-scaffolding" (as "terraform-provider-scaffolding")
 copying any existing content to tmp dir
 exporting schema from Terraform

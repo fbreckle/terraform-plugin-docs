@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -44,6 +45,7 @@ type ResourceTemplateType struct {
 	Type        string
 	Name        string
 	Description string
+	SubCategory string
 
 	HasExample   bool
 	HasExamples  bool
@@ -215,7 +217,7 @@ func (t providerTemplate) Render(providerDir, providerName, renderedProviderName
 	})
 }
 
-func (t resourceTemplate) Render(providerDir, name, providerName, renderedProviderName, typeName, exampleFile string, exampleFiles []string, importIDConfigFile, importIdentityConfigFile, importCmdFile string, schema *tfjson.Schema, identitySchema *tfjson.IdentitySchema) (string, error) {
+func (t resourceTemplate) Render(providerDir, name, providerName, renderedProviderName, typeName, exampleFile string, exampleFiles []string, importIDConfigFile, importIdentityConfigFile, importCmdFile string, schema *tfjson.Schema, identitySchema *tfjson.IdentitySchema, metadataExtraction bool, metadataDelimiter string) (string, error) {
 	schemaBuffer := bytes.NewBuffer(nil)
 	err := schemamd.Render(schema, schemaBuffer)
 	if err != nil {
@@ -225,6 +227,18 @@ func (t resourceTemplate) Render(providerDir, name, providerName, renderedProvid
 	s := string(t)
 	if s == "" {
 		return "", nil
+	}
+
+	var description string
+	var metadata = make(map[string]string)
+
+	if metadataExtraction {
+		// Take the original description (possibly containing metadata) and extract the pure description and metadata
+		description, _ = extractDescription(schema.Block.Description, metadataDelimiter)
+		metadata, _ = extractMetadata(schema.Block.Description, metadataDelimiter)
+	} else {
+		description = schema.Block.Description
+		metadata["subcategory"] = "" // this is hacky and does not scale to non-subcategory metadata, but it does the job for now
 	}
 
 	hasImportIdentityConfig := importIdentityConfigFile != "" && fileExists(importIdentityConfigFile)
@@ -249,7 +263,8 @@ func (t resourceTemplate) Render(providerDir, name, providerName, renderedProvid
 	return renderStringTemplate(providerDir, "resourceTemplate", s, ResourceTemplateType{
 		Type:        typeName,
 		Name:        name,
-		Description: schema.Block.Description,
+		Description: description,
+		SubCategory: metadata["subcategory"],
 
 		HasExample:   exampleFile != "" && fileExists(exampleFile),
 		HasExamples:  len(exampleFiles) > 0,
@@ -323,7 +338,7 @@ func (t functionTemplate) Render(providerDir, name, providerName, renderedProvid
 const defaultResourceTemplate resourceTemplate = `---
 ` + frontmatterComment + `
 page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
-subcategory: ""
+subcategory: "{{.SubCategory}}"
 description: |-
 {{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
 ---
@@ -437,3 +452,21 @@ const migrateFunctionTemplateComment string = `
 
 For example, the {{ .FunctionArgumentsMarkdown }} template can be used to replace manual argument documentation if descriptions of function arguments are added in the provider source code. */ -}}
 `
+
+// This is the metadata template that is used in a regular expression to search and strip metadata from the description
+const metaStringTemplate = `%[1]smeta%[1]s.*?%[1]s.*?%[1]s`
+
+func extractDescription(desc, delimiter string) (string, error) {
+	s := regexp.MustCompile(fmt.Sprintf(metaStringTemplate, delimiter)).Split(desc, -1)
+	return s[len(s)-1], nil
+}
+
+func extractMetadata(desc, delimiter string) (map[string]string, error) {
+	metadata := map[string]string{}
+	allMetadata := regexp.MustCompile(fmt.Sprintf(metaStringTemplate, delimiter)).FindAllString(desc, -1)
+	for _, metaString := range allMetadata {
+		explodedMeta := regexp.MustCompile(delimiter).Split(metaString, -1)
+		metadata[explodedMeta[2]] = explodedMeta[3]
+	}
+	return metadata, nil
+}

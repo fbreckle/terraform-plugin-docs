@@ -15,6 +15,8 @@ cmp docs/ephemeral-resources/example.md expected-ephemeral-resource.md
 cmp docs/state-stores/example.md expected-state-store.md
 
 -- expected-output.txt --
+metadata extraction is true
+metadata delimiter is ":"
 rendering website for provider "terraform-provider-scaffolding" (as "Scaffolding")
 exporting schema from JSON file
 getting provider schema

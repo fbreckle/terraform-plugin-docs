@@ -130,6 +130,9 @@ type generator struct {
 	templatesDir         string
 	websiteTmpDir        string
 
+	metadataExtraction bool
+	metadataDelimiter  string
+
 	ui cli.Ui
 }
 
@@ -141,7 +144,7 @@ func (g *generator) warnf(format string, a ...interface{}) {
 	g.ui.Warn(fmt.Sprintf(format, a...))
 }
 
-func Generate(ui cli.Ui, providerDir, providerName, providersSchemaPath, renderedProviderName, renderedWebsiteDir, examplesDir, websiteTmpDir, templatesDir, tfVersion string, ignoreDeprecated bool) error {
+func Generate(ui cli.Ui, providerDir, providerName, providersSchemaPath, renderedProviderName, renderedWebsiteDir, examplesDir, websiteTmpDir, templatesDir, tfVersion string, ignoreDeprecated bool, metadataExtraction bool, metadataDelimiter string) error {
 	// Ensure provider directory is resolved absolute path
 	if providerDir == "" {
 		wd, err := os.Getwd()
@@ -185,6 +188,9 @@ func Generate(ui cli.Ui, providerDir, providerName, providersSchemaPath, rendere
 		templatesDir:         templatesDir,
 		websiteTmpDir:        websiteTmpDir,
 
+		metadataExtraction: metadataExtraction,
+		metadataDelimiter:  metadataDelimiter,
+
 		ui: ui,
 	}
 
@@ -202,6 +208,11 @@ func (g *generator) Generate(ctx context.Context) error {
 
 	if g.renderedProviderName == "" {
 		g.renderedProviderName = g.providerName
+	}
+
+	g.infof("metadata extraction is %v", g.metadataExtraction)
+	if g.metadataExtraction {
+		g.infof("metadata delimiter is %q", g.metadataDelimiter)
 	}
 
 	g.infof("rendering website for provider %q (as %q)", g.providerName, g.renderedProviderName)
@@ -839,7 +850,7 @@ func (g *generator) renderStaticWebsite(providerSchema *tfjson.ProviderSchema) e
 				slices.Sort(exampleFiles)
 
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Data Source", exampleFilePath, exampleFiles, "", "", "", resSchema, nil)
+				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Data Source", exampleFilePath, exampleFiles, "", "", "", resSchema, nil, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render data source template %q: %w", rel, err)
 				}
@@ -870,7 +881,7 @@ func (g *generator) renderStaticWebsite(providerSchema *tfjson.ProviderSchema) e
 				importIdentityConfigFilePath := filepath.Join(g.ProviderExamplesDir(), "resources", resName, "import-by-identity.tf")
 
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Resource", exampleFilePath, exampleFiles, importIDConfigFilePath, importIdentityConfigFilePath, importFilePath, resSchema, resIdentitySchema)
+				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Resource", exampleFilePath, exampleFiles, importIDConfigFilePath, importIdentityConfigFilePath, importFilePath, resSchema, resIdentitySchema, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render resource template %q: %w", rel, err)
 				}
@@ -922,7 +933,7 @@ func (g *generator) renderStaticWebsite(providerSchema *tfjson.ProviderSchema) e
 				slices.Sort(exampleFiles)
 
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Ephemeral Resource", exampleFilePath, exampleFiles, "", "", "", resSchema, nil)
+				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "Ephemeral Resource", exampleFilePath, exampleFiles, "", "", "", resSchema, nil, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render ephemeral resource template %q: %w", rel, err)
 				}
@@ -973,7 +984,7 @@ func (g *generator) renderStaticWebsite(providerSchema *tfjson.ProviderSchema) e
 
 			if resSchema != nil {
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "List Resource", exampleFilePath, exampleFiles, "", "", "", resSchema, nil)
+				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "List Resource", exampleFilePath, exampleFiles, "", "", "", resSchema, nil, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render list resource template %q: %w", rel, err)
 				}
@@ -999,7 +1010,7 @@ func (g *generator) renderStaticWebsite(providerSchema *tfjson.ProviderSchema) e
 				slices.Sort(exampleFiles)
 
 				tmpl := resourceTemplate(tmplData)
-				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "State Store", exampleFilePath, exampleFiles, "", "", "", resSchema, nil)
+				render, err := tmpl.Render(g.providerDir, resName, g.providerName, g.renderedProviderName, "State Store", exampleFilePath, exampleFiles, "", "", "", resSchema, nil, g.metadataExtraction, g.metadataDelimiter)
 				if err != nil {
 					return fmt.Errorf("unable to render state store template %q: %w", rel, err)
 				}

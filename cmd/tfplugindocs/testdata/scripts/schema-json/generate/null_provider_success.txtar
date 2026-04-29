@@ -8,6 +8,8 @@ exec tfplugindocs --provider-name=terraform-provider-null --providers-schema=sch
 cmp stdout expected-output.txt
 
 -- expected-output.txt --
+metadata extraction is true
+metadata delimiter is ":"
 rendering website for provider "terraform-provider-null" (as "terraform-provider-null")
 copying any existing content to tmp dir
 exporting schema from JSON file

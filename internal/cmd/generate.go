@@ -26,6 +26,9 @@ type generateCmd struct {
 	flagWebsiteTmpDir      string
 	flagWebsiteSourceDir   string
 	tfVersion              string
+
+	metadataExtraction bool
+	metadataDelimiter  string
 }
 
 func (cmd *generateCmd) Synopsis() string {
@@ -82,6 +85,8 @@ func (cmd *generateCmd) Flags() *flag.FlagSet {
 	fs.StringVar(&cmd.flagWebsiteSourceDir, "website-source-dir", "templates", "templates directory based on provider-dir")
 	fs.StringVar(&cmd.tfVersion, "tf-version", "", "terraform binary version to download. If not provided, will look for a terraform binary in the local environment. If not found in the environment, will download the latest version of Terraform")
 	fs.BoolVar(&cmd.flagIgnoreDeprecated, "ignore-deprecated", false, "don't generate documentation for deprecated resources and data-sources")
+	fs.BoolVar(&cmd.metadataExtraction, "metadata-extraction", true, "extract meta arguments from the description attribute of resources")
+	fs.StringVar(&cmd.metadataDelimiter, "metadata-delimiter", ":", "delimiter of the meta arguments for metadata extraction. beware of special regex symbols!")
 	return fs
 }
 
@@ -109,6 +114,8 @@ func (cmd *generateCmd) runInternal() error {
 		cmd.flagWebsiteSourceDir,
 		cmd.tfVersion,
 		cmd.flagIgnoreDeprecated,
+		cmd.metadataExtraction,
+		cmd.metadataDelimiter,
 	)
 	if err != nil {
 		return fmt.Errorf("unable to generate website: %w", err)

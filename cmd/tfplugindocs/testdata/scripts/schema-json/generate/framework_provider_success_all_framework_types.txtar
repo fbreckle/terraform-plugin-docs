@@ -10,6 +10,8 @@ cmp docs/resources/example.md expected-resource.md
 cmp docs/functions/scaffolding.md expected-function.md
 
 -- expected-output.txt --
+metadata extraction is true
+metadata delimiter is ":"
 rendering website for provider "terraform-provider-scaffolding" (as "terraform-provider-scaffolding")
 exporting schema from JSON file
 getting provider schema
