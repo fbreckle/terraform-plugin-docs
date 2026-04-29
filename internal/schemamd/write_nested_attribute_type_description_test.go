@@ -11,7 +11,7 @@ import (
 	tfjson "github.com/hashicorp/terraform-json"
 	"github.com/zclconf/go-cty/cty"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/schemamd"
+	"github.com/fbreckle/terraform-plugin-docs/internal/schemamd"
 )
 
 func TestWriteNestedAttributeTypeDescription(t *testing.T) {

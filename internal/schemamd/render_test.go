@@ -12,7 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	tfjson "github.com/hashicorp/terraform-json"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/schemamd"
+	"github.com/fbreckle/terraform-plugin-docs/internal/schemamd"
 )
 
 func TestRender(t *testing.T) {
@@ -49,7 +49,7 @@ func TestRender(t *testing.T) {
 			"testdata/framework_types.md",
 		},
 		{
-			// Reference: https://github.com/hashicorp/terraform-plugin-docs/issues/380
+			// Reference: https://github.com/fbreckle/terraform-plugin-docs/issues/380
 			"deep_nested_attributes",
 			"testdata/deep_nested_attributes.schema.json",
 			"testdata/deep_nested_attributes.md",

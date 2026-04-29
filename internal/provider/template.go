@@ -16,11 +16,11 @@ import (
 
 	tfjson "github.com/hashicorp/terraform-json"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/schemamd"
+	"github.com/fbreckle/terraform-plugin-docs/internal/schemamd"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/functionmd"
-	"github.com/hashicorp/terraform-plugin-docs/internal/mdplain"
-	"github.com/hashicorp/terraform-plugin-docs/internal/tmplfuncs"
+	"github.com/fbreckle/terraform-plugin-docs/internal/functionmd"
+	"github.com/fbreckle/terraform-plugin-docs/internal/mdplain"
+	"github.com/fbreckle/terraform-plugin-docs/internal/tmplfuncs"
 )
 
 const (

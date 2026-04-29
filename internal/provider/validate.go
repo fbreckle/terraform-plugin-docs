@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/cli"
 	tfjson "github.com/hashicorp/terraform-json"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/check"
+	"github.com/fbreckle/terraform-plugin-docs/internal/check"
 )
 
 const (

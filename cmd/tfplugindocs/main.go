@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-docs/internal/cmd"
+	"github.com/fbreckle/terraform-plugin-docs/internal/cmd"
 )
 
 func main() {
